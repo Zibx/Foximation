@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Letter work</title>
+  <script>window.env = {"commit":"85"};</script>
+  <script src="/DOM/DOM.js"></script>
+  <script src="/DOM/Observer.js"></script>
+  <script src="/DOM/Store.js"></script>
+  <script src="/DOM/Transform.js"></script>
+  <script src="/DOM/Ajax.js"></script>
+
+
+  <script src="/js/D.js"></script>
+
+
+  <script src="/js/primitives_v2.js"></script>
+  <script src="/js/releasable-observer.js"></script>
+  <script src="/js/pcg-base.js"></script>
+  <script src="/js/pcg-dom-util.js"></script>
+
+  <script src="/js/oklch.js"></script>
+  <script src="/js/ui/field/ColorInput.js"></script>
+
+  <link href="/js/ui/field/boolean.css" rel="stylesheet">
+  <script src="/js/ui/field/Boolean.js"></script>
+
+
+  <script src="/js/engine/RenderTools.js"></script>
+  <script src="/js/engine/fakeCTX.js"></script>
+  <script src="/js/engine/main.js"></script>
+  <script src="/js/engine/Draw/transform.js"></script>
+  <script src="/js/engine/Draw/Objects/GameObject.js"></script>
+  <script src="/js/engine/Draw/Objects/World.js"></script>
+  <script src="/js/engine/Draw/Objects/Camera.js"></script>
+  <script src="/js/engine/Draw/Objects/Rectangle.js"></script>
+  <script src="/js/engine/Generic/Union.js"></script>
+  <script src="/js/engine/Generic/Color.js"></script>
+
+  <script src="/js/engine/Generic/BezierRect.js"></script>
+
+
+  <script src="/js/object/Interface.js"></script>
+  <script src="/js/object/EditableGroup.js"></script>
+  <script src="/js/object/SelectionRect.js"></script>
+  <script src="/js/object/Resizer.js"></script>
+  <script src="/js/object/Rotator.js"></script>
+
+
+  <script src="/fonts/opentype.js"></script>
+  <script src="/fonts/fonts.js"></script>
+
+  <script src="/js/letterWork.js"></script>
+  <script src="/js/ui/PropertiesPane.js"></script>
+  <script src="/js/properties/generic.js"></script>
+
+
+  <script src="/js/tween/tween.js"></script>
+  <script src="/js/tween/keyFrameDOM.js"></script>
+  <script src="/js/tween/keyFrame.js"></script>
+  <script src="/js/tween/easing.js"></script>
+  <script src="/js/tween/tweenCanvas.js"></script>
+  <script src="/js/tween/tweenDOM.js"></script>
+  <script src="/js/tween/tweenRow.js"></script>
+
+  <script src="/js/object/Vector.js"></script>
+  <script src="/js/Glyph.js"></script>
+  <script src="/js/TextLine.js"></script>
+  <script src="/js/object/ImageObject.js"></script>
+
+
+  <script src="/js/modes/info.js"></script>
+  <script src="/js/modes/letter.js"></script>
+
+  <script src="/js/css.js"></script>
+  <script src="/js/HorizontalFlex.js"></script>
+  <script src="/js/VerticalFlex.js"></script>
+  <script src="/js/ui/field/editorNumber/NumberInput.js"></script>
+  <link href="/js/ui/field/editorNumber/NumberInput.css" rel="stylesheet">
+  <link href="/js/letterwork.css" rel="stylesheet">
+
+</head>
+<body>
+<div id="lines"></div>
+<style>
+  #debug {
+      position: fixed;
+      top:0;
+      left:0;
+      pointer-events: none;
+      z-index: 44;
+  }
+</style>
+<div id="debug">
+
+  <canvas id="debugC" width="800" height="600"></canvas>
+</div>
+<script>
+  var debugCtx = debugC.getContext('2d')
+  d = {
+    offset: new Point(400,300),
+    scale: 20,
+    clear: ()=>{
+      debugCtx.clearRect(0,0,800,600);
+    },
+    line: (from, to, color, scale)=>{
+      debugCtx.strokeStyle = color || 'crimson';
+      debugCtx.beginPath();
+      var p1 = from.mulClone(scale||d.scale).add(d.offset);
+      debugCtx.moveTo(p1.x,p1.y);
+      var p1 = to.mulClone(scale||d.scale).add(d.offset);
+
+      debugCtx.lineTo(p1.x,p1.y);
+      debugCtx.stroke();
+    }
+  }
+
+  D.s = new Store();
+
+  var lv = new LetterWork({
+    fps: 60,
+
+    renderTo: D('#lines')[0],
+    width: 800,
+    height: 600,
+    text: `RQ`/*`QUICK BROWN
+
+FOX JUMPS OVER
+
+THE LAZYy
+DOGg
+`*//*`ЪЖСЛОЕ
+Пяни, пяни пяни
+На кармани
+Ажжь есмь
+Чю-чю-щю
+`*/,
+    backgroundColor: 0xF5F0D6,
+    color: '#111133',
+    //showGrid: true,
+    lineHeight: 0.85,
+    // debugLetters: true,
+    //debugLines: true,
+    textWidth: 7
+  });
+
+
+
+  //var animation =
+</script>
+
+
+<script>
+  setTimeout(function(){
+    var resize = Store.debounce(function(){
+      var w = document.body.clientWidth - 2;
+
+      D.s.set('width', w);
+    }, 200);
+    resize();
+    window.addEventListener('resize', resize);
+  });
+</script>
+
+</body>
+</html>

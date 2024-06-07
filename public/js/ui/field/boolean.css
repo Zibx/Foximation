@@ -1,0 +1,84 @@
+.switch {
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  line-height: 1em
+}
+
+.switch__input {
+  opacity: 0;
+  position: absolute;
+  pointer-events: none
+}
+.switch__switch {
+  position: relative;
+  display: inline-block;
+  width: 1.65em;
+  height: 1em;
+  background-color: #ccc;
+  box-shadow: inset 0 0 0 .0625em #ccc;
+  border-radius: .5em;
+  vertical-align: top;
+  transition: all .3s cubic-bezier(0.13, 0.57, 0.51, 0.97);
+  pointer-events: none
+}
+
+html.ios .switch__switch {
+  transition: all .3s cubic-bezier(0.13, 0.57, 0.51, 0.97),outline .1s ease .3s
+}
+
+html:not(.mobile-app) .switch:not(:hover):not(:active) .switch__input:not(.is-mouse-focused):focus~.switch__switch {
+  outline: 2px solid rgba(59,153,252,.8)
+}
+
+.switch:active .switch__input+.switch__switch,.switch__input~.switch__switch:active {
+  box-shadow: inset 0 0 0 .73em #999
+}
+
+.switch__switch:after {
+  position: absolute;
+  display: block;
+  content: "";
+  width: .875em;
+  height: .875em;
+  border-radius: .4375em;
+  top: .0625em;
+  left: .0625em;
+  background: #fff;
+  box-shadow: inset 0 0 0 .03em rgba(0,0,0,.1),0 0 .05em rgba(0,0,0,.1),0 .1em .2em rgba(0,0,0,.2);
+  transition: all .17s ease-out
+}
+
+.switch:active .switch__switch:after,.switch__switch:active:after {
+  width: 1.15em
+}
+
+.switch__input:checked~.switch__switch {
+  background-color: #3b99fc;
+  box-shadow: inset 0 0 0 .73em #3b99fc
+}
+
+.switch--online .switch__input:checked~.switch__switch {
+  background-color: #54cd69;
+  box-shadow: inset 0 0 0 .73em #54cd69
+}
+
+.switch--offline .switch__input:checked~.switch__switch,.switch--online .switch__input:not(:checked)~.switch__switch {
+  background-color: #fdbc40;
+  box-shadow: inset 0 0 0 .73em #fdbc40
+}
+
+.switch__input:checked~.switch__switch:after {
+  left: .7125em
+}
+
+.switch:active .switch__input:checked~.switch__switch:after,.switch__input:checked~.switch__switch:active:after {
+  left: .4375em
+}
+.switch__switch--title {
+    margin-left: 8px;
+}
+.switch__switch--left-title {
+    margin-right: 8px;
+}

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="./Loose-my2.js"></script>
+</head>
+<body>
+<canvas id="c1" width="1200" height="1200"></canvas>
+<script src="/js/letterWork/Observer.js"></script>
+<script src="/js/letterWork/Store.js"></script>
+<script src="/js/letterWork/DOM.js"></script>
+<script src="/js/letterWork/D.js"></script>
+<script src="/js/DrawTools.js"></script>
+<script src="/js/primitives.js"></script>
+<script>
+  Math.random.seeded.setSeed('ke1keke')
+  var l = new LooseQuadTree();//lgrid_create(32,32,64,64,0,0,640,640);
+  var rects = [];
+  var t1 = +new Date();
+  for(var x = 0; x < 10000; x++){
+    var rect = [
+      Math.random.seeded()*350+100|0,
+      Math.random.seeded()*350+100|0,
+      5, 5, x/*
+      Math.random()*30+5|0,
+      Math.random()*30+5|0*/
+    ];
+    l.add( rect, [rect[0]-rect[2]/2, rect[1]-rect[3]/2, rect[0]+rect[2]/2, rect[1]+rect[3]/2] );
+    //lgrid_insert(l, x, rect[0]-rect[2]/2, rect[1]-rect[3]/2, rect[2]/2, rect[3]/2);
+    rects.push(rect)
+  }
+  var t2 = +new Date();
+var ctx = c1.getContext('2d');
+
+console.log(t2-t1);
+var DT = new DrawTools(ctx, )
+var draw = function(){
+
+
+  ctx.clearRect(0,0,1200,1200);
+  ctx.strokeStyle = '#8cf6bd'
+  ctx.lineWidth = 8;
+/*  l.loose.cells.forEach(function(los){
+    if(los.head !== -1){
+      ctx.strokeRect(los.rect[0], los.rect[1], los.rect[2]-los.rect[0], los.rect[3]-los.rect[1])
+    }
+  })*/
+
+  ctx.lineWidth = 1;
+  ctx.fillStyle = '#AABBCC'
+  ctx.strokeStyle = '#BB3333'
+/*  rects.forEach(r=>{
+    ctx.strokeRect(r[0],r[1],r[2],r[3])
+  });*/
+
+
+/*  l.loose.cells.forEach(c=>{
+    var r = c.rect;
+    ctx.strokeRect(r[0],r[1],r[2]-r[0],r[3]-r[1])
+  });*/
+ctx.fillStyle = '#001';
+ /* l.elts.forEach(el=> {
+    ctx.fillText( el.id, el.mx - el.hx + 3, el.my + 3 )
+    if(el.next !== -1){
+      ctx.strokeStyle = '#00dede';
+
+      l.elts.filter(a=>a.id === el.next).forEach(function(el2){
+        DT.vector({
+          from: new Point(el.mx, el.my),
+          to: new Point(el2.mx, el2.my)
+        }, '#00dede', 1)
+      });
+      l.elts.filter(a=>a.id === el.head).forEach(function(el2){
+        DT.vector({
+          to: new Point(el.mx, el.my),
+          from: new Point(el2.mx, el2.my)
+        }, '#16de00', 1)
+      });
+
+    }
+  })*/
+  //l.draw(ctx)
+};
+  c1.addEventListener('mousemove', function(e){
+    requestAnimationFrame(function(){
+
+
+      var x = e.offsetX;
+      var y = e.offsetY;
+      //console.log(x,y)
+      var t1 = +new Date();
+      var qs = l.query( x,y,40,40);
+      var t2 = +new Date();
+      var qs2 = []
+      var r = rects;
+      for(var i = 0; i < 10000; i++){
+        var R = r[i];
+        if(R[0]<=x && R[0]+5>=x && R[1]<=y && R[1]+5>=y)
+          qs2.push(R);
+      }
+      var t3 = +new Date();
+
+      console.log(t3-t2, '_')
+      console.log(t2-t1,qs.length, qs2.length);
+
+      draw();
+      ctx.strokeStyle = '#00BBCC'
+
+      qs.forEach(r=>{
+
+        ctx.strokeRect(r[0],r[1],r[2],r[3])
+      })
+
+      var t3 = +new Date();
+      rects.forEach((rect,n) => {
+
+        rect[0]+=(Math.random()*40-20)/10;
+        rect[1]+=(Math.random()*40-20)/10;
+        l.move(rect, rect[0], rect[1]);
+      });
+      var t4 = +new Date();
+      console.log(t4-t3)
+    });
+  });
+
+  draw();
+
+  var removeOne = function(n){
+
+    var r = n === void 0 ? Math.random.seeded()*rects.length|0 : n;
+    var rect = rects[r];
+    console.log('remove', rect[4]);
+    l.remove(rect, rect[0]-rect[2]/2, rect[1]-rect[3]/2);
+    rects.splice(r,1);
+    console.log('removed', rect[4]);
+    draw();
+  }
+  var qs = l.query( 150,400,0,0);
+  console.log('--')
+  var qs = l.query( 400,150,0,0);
+</script>
+<button onclick="removeOne()">remove</button>
+</body>
+</html>
