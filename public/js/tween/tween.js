@@ -44,7 +44,17 @@ Tween.prototype = {
     },
     Point: function(a,b,c){
         return b.subClone(a).mul(c).add(a);
-    }
+    },
+    Color: (function(){
+      var c1 = new Color();
+      var c2 = new Color();
+        return function(a,b,c){
+          c1.set(a);
+          c2.set(b);
+
+          return c1.lerp(c2, c).toHTML();
+        }
+    })()
   },
   tweenID: 1,
   addItem: function(item, properties){

@@ -51,8 +51,13 @@
   <script src="/fonts/fonts.js"></script>
 
   <script src="/js/letterWork.js"></script>
+  <script src="/js/Selection.js"></script>
   <script src="/js/ui/PropertiesPane.js"></script>
   <script src="/js/properties/generic.js"></script>
+  <script src="/js/ui/ElementsTree.js"></script>
+  <link href="/js/ui/elements-tree.css" rel="stylesheet">
+  <script src="/js/ui/Toolbar.js"></script>
+  <link href="/js/ui/toolbar.css" rel="stylesheet">
 
 
   <script src="/js/tween/tween.js"></script>
@@ -64,13 +69,19 @@
   <script src="/js/tween/tweenRow.js"></script>
 
   <script src="/js/object/Vector.js"></script>
-  <script src="/js/Glyph.js"></script>
-  <script src="/js/TextLine.js"></script>
+  <script src="/js/object/Glyph.js"></script>
+  <script src="/js/object/TextLine.js"></script>
   <script src="/js/object/ImageObject.js"></script>
+  <script src="/js/object/VideoObject.js"></script>
+  <script src="/js/object/Frame.js"></script>
+
+  <script src="/js/object/CloneFactory.js"></script>
 
 
   <script src="/js/modes/info.js"></script>
   <script src="/js/modes/letter.js"></script>
+  <script src="/js/modes/vector.js"></script>
+  <script src="/js/modes/vectorActions.js"></script>
 
   <script src="/js/css.js"></script>
   <script src="/js/HorizontalFlex.js"></script>
@@ -93,7 +104,7 @@
 </style>
 <div id="debug">
 
-  <canvas id="debugC" width="800" height="600"></canvas>
+  <canvas id="debugC" width="100%" height="600"></canvas>
 </div>
 <script>
   var debugCtx = debugC.getContext('2d')
@@ -117,7 +128,7 @@
 
   D.s = new Store();
 
-  var lv = new LetterWork({
+  var lv = new Loopy({
     fps: 60,
 
     renderTo: D('#lines')[0],
@@ -134,8 +145,9 @@ DOGg
 На кармани
 Ажжь есмь
 Чю-чю-щю
+
 `*/,
-    backgroundColor: 0xF5F0D6,
+    backgroundColor: '#182026',
     color: '#111133',
     //showGrid: true,
     lineHeight: 0.85,

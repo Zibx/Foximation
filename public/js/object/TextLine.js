@@ -55,9 +55,6 @@ class TextLine extends GameObject {
     this.addChild(this.selectionEl, 'back');
 
     this.relativeInit();
-    this.relative = true;
-    this._scaleX = 1;
-    this._scaleY = 1;
   }
   get lineHeight() {
     return this._lineHeight;

@@ -8,11 +8,11 @@ D.mouse.dragBehavior = function(el, cfg){
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
-    delta.x = e.clientX - startPosition.x;
-    delta.y = e.clientY - startPosition.y;
+    delta.x = e.clientX -offset.x - startPosition.x;
+    delta.y = e.clientY -offset.y - startPosition.y;
     cfg.move && cfg.move(delta, cfg, e, style);
   }, 1);
-
+  var offset;
   var dragDown = function(e, n){
     if(cfg.check)
       if(cfg.check(e, cfg, style) === false)
@@ -20,13 +20,14 @@ D.mouse.dragBehavior = function(el, cfg){
 
     lastE = e;
 
+    offset = el ? el.getBoundingClientRect(): new Point();
     D.overlay.show();
     style = D.overlay.el.style;
     style.cursor = cfg.cursor || 'auto';
     e.stopPropagation();
     e.preventDefault();
 
-    startPosition = {x: e.clientX, y: e.clientY};
+    startPosition = {x: e.clientX-offset.x, y: e.clientY-offset.y};
 
     var unMove = D.mouse.move(window, dragMove, true);
     var unUp = D.mouse.up(window, function(e){

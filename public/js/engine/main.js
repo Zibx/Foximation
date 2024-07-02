@@ -23,6 +23,7 @@ window.Mode = {
   }
 };
 var Game = function (cfg) {
+    this.modeName = new Store.Value.String('');
     this.fps = 60;
     this.zoom = 1;
     this.pos = new Point(0,0);
@@ -246,7 +247,11 @@ Game.prototype = {
         return this.objects[0].getWpInfo(wpid);
     },
     fullDraw: function () {
+
         this.camera.clear();
+
+        this._beforeDraw && this._beforeDraw(this.camera.ctx)
+
         //this.camera.draw('back');
         this.camera.draw();
 
@@ -292,10 +297,22 @@ Game.prototype = {
             ctx = this.ctx;
 
         var getWorldPos = function(){return this.camera.pointToWorld(this.point) };
+
+        var wrapPoint = new Point();
+        var wrapped = {
+          getWorldPos,
+          event: void 0,
+          point: wrapPoint
+        };
         var eventWrapper = function(event) {
+          wrapPoint.x = event.offsetX;
+          wrapPoint.y = event.offsetY;
+          wrapped.event = event;
+          return wrapped;
             var point = new Point(event.offsetX, event.offsetY);
             return {point, getWorldPos, event}
         };
+        this.eventWrapper = eventWrapper;
         this.renderTo.addEventListener('mousemove', function (e) {
             //_self.floor[0].rot+=1;
             var mode = _self.mode;
@@ -374,10 +391,10 @@ Game.prototype = {
               var point = eventWrapper(e).point;
               //console.log(point, context.startPoint,_self.camera.scale, context.d)
               _self.camera.position.x = context.startPosition.x -
-                (point.x - context.startPoint.x)*context.d.x*2;
+                (delta.x)*context.d.x*2;
 
               _self.camera.position.y = context.startPosition.y -
-                (point.y - context.startPoint.y)*context.d.y*2;
+                (delta.y)*context.d.y*2;
 
               //_self.camera.position.y -= (newCameraPoint.y - cameraPoint.y)*2;
               _self.gameLoop();
@@ -395,6 +412,7 @@ Game.prototype = {
     },
 
     setMode: function (mode, data) {
+      this.modeName.set(mode);
         if (!this.modes[mode]) {
             return console.warn('Unknown mode', mode, data)
         }
@@ -411,12 +429,14 @@ Game.prototype = {
             reactor: this.modes[mode],
             scope: this.modes[mode].scope || (this.modes[mode].scope = new ModeScope())
         };
+        Object.assign(this.modes[mode].scope, data)
 
         this.mode &&
             this.mode.reactor &&
                 this.mode.reactor.init &&
                     this.mode.reactor.init.call(this, this.mode.scope);
 
+        return this.mode;
     }
 
 };

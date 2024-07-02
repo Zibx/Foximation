@@ -55,15 +55,16 @@ class Camera extends GameObject{
       var transform = new Transform();
 
       transform.m = this.transform.m.slice();
-      transform.scale(this.width,this.height);
-      transform.translate(0.5,0.5);
+      //transform.scale(this.width/10,this.height/10);
+      transform.translate(this.width/2,this.height/2);
 
-      var aspect = this.width / this.height;
+      transform.scale( this.scale , this.scale );
+      /*var aspect = this.width / this.height;
       if(aspect>0) {
         transform.scale( this.scale / aspect, this.scale );
       }else{
         transform.scale( this.scale , this.scale / aspect);
-      }
+      }*/
 
       transform.rotate(this.rotation);
       transform.translate(-this.position.x/2,-this.position.y/2);
@@ -198,21 +199,24 @@ class Camera extends GameObject{
         var count = Math.pow(2,depth+1) ;
 
         var delta = this.width/count;
-        camera.ctx.beginPath();
+        this.ctx.beginPath();
 
         for(x = 0; x <= this.width; x+=delta) {
-            camera.ctx.moveTo(x, 0);
-            camera.ctx.lineTo(x, this.height);
+          var offsetX = (-this.position.x*this.scale/2+x+this.width*10) % (this.width);
+            this.ctx.moveTo(offsetX, 0);
+            this.ctx.lineTo(offsetX, this.height);
         }
         var delta = this.height/count;
         for(y = 0; y <= this.height; y+=delta) {
-            camera.ctx.moveTo(0, y);
-            camera.ctx.lineTo(this.width, y);
+          var offsetY = (-this.position.y*this.scale/2+y+this.height*10) % (this.height);
+          
+            this.ctx.moveTo(0, offsetY);
+            this.ctx.lineTo(this.width, offsetY);
         }
-        camera.ctx.lineWidth = 3/count;
-        camera.ctx.strokeStyle = '#f00';
-        camera.ctx.stroke();
-        camera.ctx.closePath();
+        this.ctx.lineWidth = 3/count;
+        this.ctx.strokeStyle = '#5e5c5c';
+        this.ctx.stroke();
+        this.ctx.closePath();
         if(depth>0)
             this.drawGrid(depth - 1);
     }

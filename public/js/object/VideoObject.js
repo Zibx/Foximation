@@ -1,18 +1,18 @@
-var ImageTweenProps = {
+var VideoTweenProps = {
   rotation: CommonTweenProps.rotation,
   skewX: CommonTweenProps.skewX,
   skewY: CommonTweenProps.skewY,
   _positionX: CommonTweenProps._positionX,
   _positionY: CommonTweenProps._positionY,
   _scaleX: CommonTweenProps._scaleX.extend({
-    set: function(val){this._scaleX = val; this.width = Math.abs(this.imageWidth*this._scaleX);this._scale.x = this._scaleX<0?-1:1}
+    set: function(val){this._scaleX = val; this.width = Math.abs(this.videoWidth*this._scaleX);this._scale.x = this._scaleX<0?-1:1}
   }),
   _scaleY: CommonTweenProps._scaleY.extend({
-    set: function(val){this._scaleY = val; this.height = Math.abs(this.imageHeight*this._scaleY);this._scale.y = this._scaleY<0?-1:1}
+    set: function(val){this._scaleY = val; this.height = Math.abs(this.videoHeight*this._scaleY);this._scale.y = this._scaleY<0?-1:1}
   })
 };
 
-class ImageObject extends Item {
+class VideoObject extends Item {
   constructor( cfg ) {
     super( cfg );
     this.relativeInit();
@@ -22,19 +22,22 @@ class ImageObject extends Item {
       _scaleY: scale
     })*/
   }
-  setImage(img){
-    this.image = img;
-    this.width = this.imageWidth = img.width;
-    this.height = this.imageHeight = img.height;
+  setVideo(img){
+    this.video = img;
+    debugger
+    this.width = this.videoWidth = img.videoWidth;
+    this.height = this.videoHeight = img.videoHeight;
     this.loading = false;
     this._scaleX = 1;
     this._scaleY = 1;
-    this.tween.addItem(this, ImageTweenProps);
+    this.tween.addItem(this, VideoTweenProps);
 
   }
   physic(dt, t){
-    if(!this.loading)
-      this.tween.applyFrameProperties(this);
+    if(!this.loading) {
+      this.tween.applyFrameProperties( this );
+      this.video.currentTime = this.tween.getCurrentFrame()/60;
+    }
   }
   draw(ctx){
     if(this.loading){
@@ -47,7 +50,7 @@ class ImageObject extends Item {
     }else{
       var w= Math.abs(this.width), h = Math.abs(this.height);
 
-      ctx.drawImage(this.image, -w/2, -h/2, w, h);
+      ctx.drawImage(this.video, -w/2, -h/2, w, h);
     }
 
     if(this.highlight || this.selected){
@@ -59,9 +62,12 @@ class ImageObject extends Item {
       ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
     }
   }
+  toString(){
+    return 'Video';
+  }
 }
-ImageObject.prototype.props = {
-  _type: 'image',
+VideoObject.prototype.props = {
+  _type: 'video',
   Position: Property.position,
   Fill: Property.fill,
   Stroke: Property.stroke

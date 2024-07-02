@@ -1,0 +1,17 @@
+.elements-tree {
+    width: 200px
+}
+.tree-item__label {
+    padding: 4px 0px 4px 8px;
+    color: #eeeffe;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    cursor: default;
+    font-size: 14px;
+}
+.tree-item--highlight {
+    border-color: #3b99fc;
+}
+.tree-item--selected {
+    background: #326295;
+}

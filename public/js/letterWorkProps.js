@@ -1,4 +1,4 @@
-LetterWorkProps = function(cfg){
+LoopyProps = function(cfg){
   Object.assign(this, cfg)
   this.selectedSymbols = [];
   this.selectedLines = [];
@@ -49,7 +49,7 @@ LetterWorkProps = function(cfg){
 var charProps = [
 
 ];
-LetterWorkProps.prototype = {
+LoopyProps.prototype = {
   updateSelection: function(symbols, lines){
     this.selectedSymbols = [];
     if(symbols.length) {

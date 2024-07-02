@@ -1,40 +1,25 @@
-var VectorFillColor =     CommonTweenProps.fillStyle.extend({
-  set: function(val){
-    this.path.fill = val;
-  },
-  get: function(){
-    return this.path.fill;
-  }
-});
-var VectorTweenProps = {
-  rotation: CommonTweenProps.rotation,
-  skewX: CommonTweenProps.skewX,
-  skewY: CommonTweenProps.skewY,
-  _positionX: CommonTweenProps._positionX,
-  _positionY: CommonTweenProps._positionY,
-  _scaleX: CommonTweenProps._scaleX.extend({
-    set: function(val){this._scaleX = val; this.width = this.path.width*this._scaleX}
-  }),
-  _scaleY: CommonTweenProps._scaleY.extend({
-    set: function(val){this._scaleY = val; this.height = this.path.height*this._scaleY}
-  }),
-  fillStyle: VectorFillColor
-};
-
 class Vector extends Item {
   constructor( cfg ) {
     super( cfg );
     this.relativeInit();
-    this.relative = true;
 
     this.updatePathBoundingBox(this.path);
     this._scaleX = this.width/(this.path.width || 1);
     this._scaleY = this._scaleX;//this.height/(this.path.height || 1);
-    this.tween.addItem(this, VectorTweenProps);
+    this.tween.addItem(this, this.extractProps());
+    this.editMode = false;
     /*this.tween.updateItemData(this, {
       _scaleX: this.width/(this.path.width || 1),
       _scaleY: scale
     })*/
+  }
+  propsForClone(){
+    var out = Item.prototype.propsForClone.call(this);
+    out.path = Object.assign({}, this.path);
+    out.path.commands = out.path.commands.slice();
+    out._scaleX = this._scaleX;
+    out._scaleY = this._scaleY;
+    return out;
   }
   collider(p){
     return this.ctx.isPointInPath(this.getPath(), p.x, p.y);
@@ -108,6 +93,7 @@ class Vector extends Item {
     return this.path.fill = val;
   }
   draw(ctx){
+
     if(this.path.fill){
       ctx.fillStyle = this.path.fill;
       ctx.fill(this.getPath());
@@ -118,6 +104,7 @@ class Vector extends Item {
       ctx.strokeStyle = this.path.stroke;
       ctx.stroke(this.getPath());
     }
+
     if(this.highlight || this.selected){
       ctx.lineWidth = this.parent.pxRatio.x*(2)
       ctx.strokeStyle = GIZMO_COLOR_WHITE;
@@ -126,14 +113,113 @@ class Vector extends Item {
       ctx.strokeStyle = GIZMO_COLOR;
       ctx.stroke(this.getPath());
     }
+
+    if(this.editMode){
+      this.scope.movables.draw(ctx, this.parent.pxRatio.x)
+    }
+    //this.debugMode = true;
+    if(this.debugMode) {
+      ctx.strokeStyle = '#aa00ff';
+      ctx.lineWidth = this.parent.pxRatio.x * ( 1 );
+      ctx.strokeRect( -this.width / 2, -this.height / 2, this.width, this.height );
+      ctx.fillStyle = '#aa00ff';
+
+      ctx.fillText(this.position,-10,-10);
+      ctx.fillText(this._position,-10,0);
+      ctx.fillText(this._scaleX.toFixed(1)+'x'+this._scaleY.toFixed(1),-10,10);
+    }
+
   }
+  doubleClick(e, scope, ctx){
+    this.editMode = !this.editMode;
+
+    if(this.editMode){
+      scope = this.scope = scope.game.setMode( 'vector', {
+        pxRatio: this.parent.pxRatio.x,
+        item: this,
+        commands: this.path.commands,
+        path: this.path
+      } ).scope;
+
+    }else {
+      var w = this.width,
+          h = this.height;
+
+
+      var l = this.path.left,
+        t = this.path.top;
+
+      var w1 = this.path.width,
+        h1 = this.path.height;
+/*      this.position.add(
+        (l)*(w1/w),
+        (t)*(h1/h),
+      );*/
+
+      this.lastScaleKey = false;
+      this.updatePathBoundingBox(this.path);
+
+
+      var l = this.path.left,
+        t = this.path.top;
+      var w1 = this.path.width,
+        h1 = this.path.height;
+/*      this.position.sub(
+        (l)*(w1/w),
+        (t)*(h1/h),
+      );*/
+
+      scope = scope.game.setMode( 'info', {
+        pxRatio: this.parent.pxRatio.x,
+        commands: this.path.commands
+      } ).scope;
+
+
+    }
+
+  }
+  toString(){ return 'Vector'}
 }
 Vector.prototype.ctx = D.h('canvas').getContext('2d');
 Vector.prototype.props = {
   _type: 'vector',
-  Position: Property.position,
-  Fill: [VectorFillColor],
-  Stroke: Property.stroke
+  Position: [
+    CommonTweenProps._positionX,
+    CommonTweenProps._positionY,
+    CommonTweenProps._scaleX.extend({
+
+      set: function(val){
+        this._scaleX = val; this.width = Math.abs(this.path.width*this._scaleX);this._scale.x = this._scaleX<0?-1:1
+      }
+    }),
+    CommonTweenProps._scaleY.extend({
+      set: function(val){
+        this._scaleY = val; this.height = Math.abs(this.path.height*this._scaleY);this._scale.y = this._scaleY<0?-1:1
+      }
+    }),
+    CommonTweenProps.skewX,
+    CommonTweenProps.skewY,
+    CommonTweenProps.width.extend({noTween: true}),
+    CommonTweenProps.height.extend({noTween: true}),
+    CommonTweenProps.rotation,
+    CommonTweenProps.opacity
+  ],
+  Fill: [CommonTweenProps.fillStyle.extend({
+    set: function(val){
+      this.path.fill = val;
+    },
+    get: function(){
+      return this.path.fill;
+    }
+  })],
+  Stroke: [CommonTweenProps.strokeStyle.extend({
+    set: function(val){
+      this.path.stroke = val;
+    },
+    get: function(){
+      return this.path.stroke;
+    }
+  })]
 }
 
 Vector.pathFromString = function(cfg){

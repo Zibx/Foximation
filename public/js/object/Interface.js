@@ -3,6 +3,23 @@ class Interact extends GameObject{
 };
 
 class Item extends GameObject{
+  extractProps(){
+    var props = {};
+    for(var key in this.props){
+      if(key === '_type')
+        continue;
+
+      var group = this.props[key];
+      group.forEach(prop => {
+        if(!prop.key)
+          debugger;
+        if(prop.noTween)
+          return;
+        props[prop.key] = prop;
+      })
+    }
+    return props;
+  }
   scalePathData(pathInfo, sx, sy){
     pathInfo.commands.forEach(c=>{
       if(c.type==='M' || c.type==='L'){

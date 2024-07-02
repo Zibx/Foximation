@@ -1,9 +1,11 @@
-var LetterWork = function(cfg) {
+var Loopy = function(cfg) {
   Object.assign( this, cfg );
+  this.selection = new Loopy.Selection({main: this});
+
   this.lineHeight = this.lineHeight || 1.2;
   var el = this.canvas = D.h('canvas', {
     style: {
-      width: this.width+'px',
+      width: '100%',
       height: this.height+'px',
     },
     cls: 'letterwork-canvas',
@@ -11,13 +13,13 @@ var LetterWork = function(cfg) {
     height: this.height,
     renderTo: this.renderTo
   });
-
-  this.backgroundColor = new Store.Value.Number(cfg.backgroundColor);
+  this.backgroundColor = new Store.Value.Number((new Color(cfg.backgroundColor)).toNumber());
 
 
   this.lines = [];
 
   this.properties = new PropertiesPane({lw: this, main: this});
+  var elementsTree = this.elementsTree = new ElementsTree({main: this});
 
 
   this.tween = new Tween({
@@ -31,6 +33,9 @@ var LetterWork = function(cfg) {
       line.symbols.forEach(s=>s.debugLetters = val)
     }));
 
+  var toolbar = this.toolbar = new Toolbar({main: this, tween: this.tween});
+
+
   this.layout = D.h('div', {
       cls: 'letterwork-layout',
       renderTo: this.renderTo
@@ -38,40 +43,42 @@ var LetterWork = function(cfg) {
 
     new VerticalFlex({
         onchange: (sizes)=>{
-          this.canvas.height = sizes[0];
-          this.canvas.style.height = sizes[0]+'px';
-          g.height = sizes[0];
-          g.camera.height = sizes[0];
+          this.canvas.height = sizes[1];
+          this.canvas.style.height = sizes[1]+'px';
+          g.height = sizes[1];
+          g.camera.height = sizes[1];
           g.fullDraw();
         },
         ondrag: Store.debounce((sizes)=>{
           requestAnimationFrame(()=>{
-            this.canvas.height = sizes[0];
-            this.canvas.style.height = sizes[0]+'px';
+            this.canvas.height = sizes[1];
+            this.canvas.style.height = sizes[1]+'px';
 
             g.height = sizes[0];
-            g.camera.height = sizes[0];
+            g.camera.height = sizes[1];
             g.fullDraw();
             this.tween.resizeHeight(sizes[1]);
           })
         }, 10)
       },
+      this.toolbar,
       new HorizontalFlex({
           onchange: (sizes)=>{
-              this.canvas.width = sizes[0];
-              g.width = sizes[0];
-              g.camera.width = sizes[0];
+              this.canvas.width = sizes[1];
+              g.width = sizes[1];
+              g.camera.width = sizes[1];
               g.fullDraw();
           },
           ondrag: Store.debounce((sizes)=>{
             requestAnimationFrame(()=>{
-              this.canvas.width = sizes[0];
-              g.width = sizes[0];
-              g.camera.width = sizes[0];
+              this.canvas.width = sizes[1];
+              g.width = sizes[1];
+              g.camera.width = sizes[1];
               g.fullDraw();
             })
           }, 10)
         },
+        this.elementsTree,
         this.canvas,
         this.properties
       ),
@@ -79,7 +86,6 @@ var LetterWork = function(cfg) {
     )
   );
 
-  var lw = this;
   this.selectedLines = [];
   this.selectedChars = [];
 
@@ -89,10 +95,13 @@ var LetterWork = function(cfg) {
     cameraControl: false,
     renderTo: el,
     width: this.width, height: this.height,
-    zoom: 0.1,
+    zoom: 1,
     crisp: true,
     fps: this.fps || 60,
     modes: this.modes,
+    _beforeDraw: function(){
+      this.camera.drawGrid(4);
+    },
     _afterDraw: function(ctx){
       if(editableGroup) {
         editableGroup.physic();
@@ -109,11 +118,16 @@ var LetterWork = function(cfg) {
 //      this
     }
   } );
+  this.camera = this.game.camera;
+  elementsTree.init(this.game.world);
+  toolbar.init({game: this.game})
 
   var editableGroup = this.editableGroup = new EditableGroup({
     width: 1, height:1, camera: g.camera, main: this
   })
-  var selectionRect = this.selectionRect = new SelectionRect({width: 1, height:1, camera: g.camera})
+  var selectionRect = this.selectionRect = new SelectionRect({
+    width: 1, height:1, camera: g.camera, selection: this.selection
+  })
 
   Object.values(this.modes).forEach(mode => {
     mode.scope.lw = this;
@@ -125,7 +139,7 @@ var LetterWork = function(cfg) {
     mode.scope.selectionRect = this.selectionRect;
   });
 
-  [editableGroup, selectionRect].forEach(item => {
+  [editableGroup, selectionRect, elementsTree].forEach(item => {
     item.game = this.game;
     item.tween = this.tween;
     item.camera = this.game.camera;
@@ -240,6 +254,7 @@ var LetterWork = function(cfg) {
         lw: this,
         text: text,
         font: font,
+        fontSize: 32,
         //font: 'bold 1px Arial',
         ctx: g.Render.ctx,
         highlight: this.debugLines,
@@ -266,7 +281,7 @@ var LetterWork = function(cfg) {
     ));
 
     var v = new Vector({
-      position: new Point(0,0),
+      _position: new Point(100,100),
       path: {stroke: 'crimson', fill: '#00b000',
         width: 1,
         height: 1,
@@ -276,8 +291,8 @@ var LetterWork = function(cfg) {
           {type: 'L', x: -0.5, y: 0.4},
           {type: 'Z'}
         ]},
-      width: 1,
-      height: 1,
+      width: 32,
+      height: 32,
       tween: this.tween
     })
     g.addObject(v)
@@ -285,7 +300,7 @@ var LetterWork = function(cfg) {
 
 
     var v = new Vector({
-      position: new Point(0,1),
+      _position: new Point(0,200),
       path: Vector.pathFromString({
         width: 32,
         height: 32,
@@ -294,8 +309,8 @@ var LetterWork = function(cfg) {
         stroke: "#041522",
         strokeLinecap: "round"
       }),
-      width: 2,
-      height: 2,
+      width: 64,
+      height: 64,
       tween: this.tween
     })
     g.addObject(v)
@@ -303,7 +318,7 @@ var LetterWork = function(cfg) {
 
 
     var v = new Vector({
-      position: new Point(0,2),
+      _position: new Point(0,40),
       path: Vector.pathFromString({
         width: 28,
         height: 16,
@@ -312,12 +327,22 @@ var LetterWork = function(cfg) {
         stroke: "#041522",
         strokeLinecap: "round"
       }),
-      width: 2,
-      height: 2,
+      width: 128,
+      height: 128,
       tween: this.tween
     })
     g.addObject(v)
-    g.world.addChild(v)
+    var frame = new Frame({
+      tween: this.tween,
+      _position: new Point(0,-250),
+      width: 420,
+      height: 420,
+      fillStyle: '#AABBCC'
+    });
+    g.world.addChild(frame)
+    g.addObject(frame)
+
+    frame.addChild(v)
 
 
     setTimeout(()=>g.gameLoop(), 1)
@@ -326,11 +351,11 @@ var LetterWork = function(cfg) {
   var uiStorage = new GameObject({name: 'UI'});
   uiStorage.addChild(this.editableGroup, 'ui');
   uiStorage.addChild(this.selectionRect, 'ui');
-  g.world.addChild(   uiStorage );
+  g.world.addChild( uiStorage, 'ui' );
   //g.addObject(   this.editableGroup );
 
 
-  g.camera.scale = 0.18;
+  //g.camera.scale = 0.18;
   this.backgroundColor.hook(val=>
     g.camera.background = '#'+numberToHex(val)
   )
@@ -346,14 +371,36 @@ var LetterWork = function(cfg) {
     }
 
   }, {passive: false});
-  document.onpaste = (event)=>{
-    var items = (event.clipboardData || event.originalEvent.clipboardData).items;
-     // will give you the mime types
+
+
+
+  document.ondrop = (event) =>{
+    console.log("File(s) dropped");
+
+    // Prevent default behavior (Prevent file from being opened)
+    event.preventDefault();
+    var items = event.dataTransfer.items;
+
     for(var i = 0, _i = items.length; i < _i; i++){
       var item = items[i];
 
       console.log(item);
-      if (item.kind === 'file') {
+      if(item.type === 'video/mp4'){
+        var obj = new VideoObject( { tween: this.tween } );
+
+        var x = event.target.result;
+        var img = D.h( 'video', {
+          autoplay: false,
+          controls: false,
+          src: URL.createObjectURL(event.dataTransfer.files[i]),
+          onloadeddata: () => {
+            obj.setVideo( img );
+            this.updateCanvas();
+          } } );
+        img.load();
+        g.addObject(obj)
+        g.world.addChild(obj)
+      }else {
         var obj = new ImageObject({tween: this.tween});
         g.addObject(obj)
         g.world.addChild(obj)
@@ -370,9 +417,53 @@ var LetterWork = function(cfg) {
         reader.readAsDataURL(blob);
       }
     }
+  };
+  document.ondragover = function(e){
+      e.preventDefault();
+  }
+  document.onpaste = (event)=>{
+    var items = (event.clipboardData || event.originalEvent.clipboardData).items;
+     // will give you the mime types
+    for(var i = 0, _i = items.length; i < _i; i++){
+      var item = items[i];
+
+      console.log(item);
+      if (item.kind === 'file') {
+
+
+        var x = event.target.result;
+
+        if(item.type === 'video/mp4'){
+          var obj = new VideoObject( { tween: this.tween } );
+
+          var x = event.target.result;
+          var img = D.h( 'video', {
+            autoplay: false,
+            controls: false,
+            src: URL.createObjectURL(item),
+            onloadeddata: () => obj.setVideo( img ) } );
+          img.load();
+        }else {
+          var blob = item.getAsFile();
+          var reader = new FileReader();
+          var obj = new ImageObject( { tween: this.tween } );
+          g.addObject( obj )
+          g.world.addChild( obj )
+
+          reader.onload = function( event ) {
+
+            var img = D.h( 'img', { src: x, onload: () => obj.setImage( img ) } );
+          };
+          reader.readAsDataURL(blob);
+        }
+        g.addObject( obj )
+        g.world.addChild( obj )
+
+      }
+    }
   }
 }
-LetterWork.prototype = {
+Loopy.prototype = {
   updateEditableGroup: function(){
     this.editableGroup.shouldUpdate = true
   },

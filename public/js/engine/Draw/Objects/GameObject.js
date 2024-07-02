@@ -11,9 +11,10 @@ const GameObject = function(cfg) {
     this.scale = new Point(1,1);
     this.skewX = 0;
     this.skewY = 0;
+    this.opacity = 1;
     this.relative = false;
     this.pxRatio = new Point(1,1);
-
+    this.clip = false;
     this._overlay = {};
     Object.assign(this, cfg);
 
@@ -35,17 +36,45 @@ const GameObject = function(cfg) {
         this.overlay.log = this.overlay.log || GameObject.prototype.overlay.log;
 };
 GameObject.prototype = {
+  getWorldRotation: function(){
+    return this.rotation + (this.parent ?this.parent.getWorldRotation() :0);
+  },
+    propsForClone: function(){
+        var out = {
+          width: this.width,
+          height: this.height,
+          scale: this.scale.clone(),
+          skewX: this.skewX,
+          skewY: this.skewY,
+          opacity: this.opacity,
+          position: this.position.clone(),
+          origin: this.origin.clone(),
+          tmpOrigin: this.tmpOrigin.clone(),
+          rotation: this.rotation,
+        };
+      if(this.relative) {
+        Object.assign( out, {
+          _position: this._position.clone(),
+          _scale: this._scale.clone(),
+          _skewX: this._skewX,
+          _skewY: this._skewY,
+          _rotation: this._rotation
+        } );
+      }
+      return out;
+    },
     collider: function(p){
         return p.x >= -this.width/2 && p.x <= this.width /2 &&  p.y >= -this.height/2 && p.y <= this.height /2;
     },
     addChild: function(child, layer){
-        child.parent = this;
-        child.layer = layer;
-        if(layer){
-            (this.layerChildren[layer] || (this.layerChildren[layer] = [])).push(child);
-        }else {
-            this.children.push(child);
-        }
+      child.parent = this;
+      child.layer = layer;
+      if(layer){
+          (this.layerChildren[layer] || (this.layerChildren[layer] = [])).push(child);
+      }else {
+          this.children.push(child);
+      }
+      this.afterAddChild && this.afterAddChild(this, child, layer)
     },
     removeChild: function(child, layer) {
         var children;
@@ -59,20 +88,28 @@ GameObject.prototype = {
             children.splice(idx, 1);
         }
     },
+    replaceChild: function(what, withWhat, layer){
+      what.parent.children.splice(what.parent.children.indexOf(what),1, withWhat);
+      withWhat.parent = what.parent;
+      what.afterAddChild && what.afterAddChild(this, withWhat, layer)
+    },
     hidden: false,
     relativeInit: function(){
-      this._position = new Point(0,0);
-      this._width = 0;
-      this._height = 0;
-      this._scale = new Point(1,1);
-      this._skewX = 0;
-      this._skewY = 0;
-      this._rotation = 0;
+      this.relative = true;
+      this._scaleX = this._scaleX || 1;
+      this._scaleY = this._scaleY || 1;
+      this._position = this._position || new Point(0,0);
+      this._width = this._width || 0;
+      this._height = this._height || 0;
+      this._scale = this._scale || new Point(1,1);
+      this._skewX =  this._skewX ||0;
+      this._skewY = this._skewY || 0;
+      this._rotation = this._rotation || 0;
     },
     _draw: function(ctx, transform, layer, camera){
         if(this.hidden)
             return;
-        var i = 0, children = this.children, _i;
+        var i = 0, children = this.children, _i, alpha;
 
         transform.save();
         if(this.relative) {
@@ -107,6 +144,12 @@ GameObject.prototype = {
         transform.copyTo(this.lastTransform);
         ctx.setTransform.apply(ctx, transform.m);
 
+
+        if(this.opacity<1){
+          alpha = ctx.globalAlpha;
+          ctx.globalAlpha *= this.opacity;
+        }
+
         if(this.layer === layer) {
           if(this.highlight) {
             Rectangle.prototype.draw.call(Object.assign({
@@ -119,6 +162,19 @@ GameObject.prototype = {
 
           this.draw(ctx, transform, void 0, camera);
         }
+
+
+
+
+        if(this.clip){
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(-this.width/2, -this.height/2, this.width, this.height)
+          ctx.clip();
+        }
+
+
+
         if(layer){
             children = this.layerChildren[layer];
             if(children){
@@ -135,6 +191,18 @@ GameObject.prototype = {
                 children[i]._draw(ctx, transform, layer, camera)
             }
         }
+
+
+
+        if(this.clip){
+          ctx.restore();
+        }
+
+        if(this.opacity<1){
+          ctx.globalAlpha = alpha;
+        }
+
+
         transform.translate(tmpOrigin.x,tmpOrigin.y);
 
 

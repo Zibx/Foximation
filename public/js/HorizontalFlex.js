@@ -50,6 +50,14 @@ var HorizontalFlex = function(cfg = {resizable: true}, ...children){
   };
   this.dom = D.div({cls: 'HFlex-cmp'},
     D.join(children, (n)=>D.div({cls: 'HFlex-cmp__resizer', onmousedown: (e)=>dragDown(e,n)})))
+
+  if(!cfg.noInit)
+    setTimeout(()=>{
+      updateChildrenSizes()
+      updateChildrenSizes(true);
+      flex.fire('change', initialEls.map(el => (el.dom || el).getBoundingClientRect().width));
+
+    }, 20);
 }
 HorizontalFlex.prototype = new Observable();
 HorizontalFlex.prototype.set

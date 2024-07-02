@@ -5,7 +5,7 @@ class Resizer extends Interact {
   }
   draw(ctx){
 
-scale = 1
+    scale = 1
     //ctx.strokeRect(-this.width*scale, -this.height*scale, this.width*scale*2, this.height*scale*2);
 
     if(this.fix)
@@ -13,7 +13,7 @@ scale = 1
 
     ctx.fillStyle='#FBFCFD';
     ctx.strokeStyle=GIZMO_COLOR;
-    var real = 16, draw = 5, scale =draw/real/2;
+    var real = 16, draw = 8, scale =draw/real/2;
     ctx.fillRect(-this.width*scale, -this.height*scale, this.width*scale*2, this.height*scale*2);
     ctx.strokeRect(-this.width*scale, -this.height*scale, this.width*scale*2, this.height*scale*2);
 
@@ -64,14 +64,18 @@ scale = 1
     var innerRect = rect.slice(), x1,x2, y1,y2;
     var list = group.list;
     var initialScales = group.list.map(a=>new Point(a._scaleX, a._scaleY));
+    //var initialAspects = initialScales.map(a=>a.x / a.y);
+    var initialAspect = rectW/rectH;
 
     var groupRegion = camera.getRegion(group);
     var initialPositions = group.list.map((item,n)=>{
       var itemRegion = camera.getRegion(item);
+      var relative = itemRegion[0].middle(itemRegion[1]).sub(groupRegion[0]).div(groupRegion[1].subClone(groupRegion[0]));
+      console.log('relative start:', relative+'')
       return {
         absolute: item._position.clone(),
         start: item.objectPointToWorld(new Point(0, 0)),
-        relative: itemRegion[0].middle(itemRegion[1]).sub(groupRegion[0]).div(groupRegion[1].subClone(groupRegion[0]))
+        relative: relative
       }
     });
     var inverseX = false, inverseY = false;
@@ -89,7 +93,6 @@ scale = 1
     var pxRatio = group.world.pxRatio.clone()
 
     var moveX, moveY;
-
     D.mouse.dragBehavior(false,{
       cursor: this.cursor,
       move: Store.debounce((deltaPX,me,e)=>{
@@ -105,7 +108,6 @@ scale = 1
         projectorY.projection(yAxis);
 
 
-
         /*d.line(new Point(), xAxis, 'green');
         d.line(new Point(), yAxis, 'red');*/
 
@@ -113,7 +115,21 @@ scale = 1
         d.line(new Point(), projectorY, 'red',50);*/
 
         relativePX.x = projectorX.count(xAxis);//deltaPX.x*group.pxRatio.x;
-        relativePX.y = projectorY.count(yAxis);//deltaPX.y*group.pxRatio.y;
+
+        if(e.shiftKey){
+          projectorY.normalize().mul(projectorX.magnitude()/initialAspect);
+          if(!this.fix){
+            if(this.n % 2 === 0) {
+              relativePX.y = relativePX.x * initialAspect;// projectorY.count(yAxis);//deltaPX.y*group.pxRatio.y;
+            }else{
+              relativePX.y = -relativePX.x * initialAspect;
+            }
+          }
+
+        }else{
+          relativePX.y = projectorY.count(yAxis);//deltaPX.y*group.pxRatio.y;
+        }
+
         // d.line(new Point(), relativePX, 'blue', 100);
         //console.log(projectorX.div(xAxis))
         //relativePX = relativePX.rotate(-initialRotation);
@@ -196,8 +212,11 @@ scale = 1
 
               _scaleX: sx,
               _scaleY: sy,
-              _positionX: initialPositions[n].absolute.x+relativePXToWorld.x* initialPositions[n].relative.x,
-              _positionY: initialPositions[n].absolute.y+relativePXToWorld.y* initialPositions[n].relative.y
+              _positionX: innerRect[0]+group.width* (inverseX?1-initialPositions[n].relative.x:initialPositions[n].relative.x),
+              _positionY: innerRect[1]+group.height* (inverseY?1-initialPositions[n].relative.y:initialPositions[n].relative.y),
+              //_positionY: initialPositions[n].absolute.y+relativePXToWorld.y* initialPositions[n].relative.y
+
+
               /*_positionX: initialPositions[n].absolute.x+relativePX.x* initialPositions[n].relative.x,
               _positionY: initialPositions[n].absolute.y-relativePX.y* initialPositions[n].relative.y*/
               /*_scaleY: 1-scaleY-1,

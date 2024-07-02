@@ -1,0 +1,10 @@
+.main-toolbar {
+    height: 64px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    align-items: center;
+}
+.toolbar-button-active {
+    background: #0d5777;
+}

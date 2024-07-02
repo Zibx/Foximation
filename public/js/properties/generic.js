@@ -31,8 +31,11 @@ var CommonTweenProps = {
   rotation: new Property.PropertyItem('Rotation', Number, {
     get: function(){return this.rotation},
     set: function(val){this.rotation = val},
-    //getter: (a)=>a/180*3.14159265,
-    //setter: (a)=>a/3.14159265*180,
+    ui: {
+      setter: (a)=>a/180*3.14159265,
+      getter: (a)=>a/3.14159265*180,
+      step: 1
+    },
     keyFrameColor: '#9900ff',
     key: 'rotation',
     value: 0,
@@ -52,6 +55,10 @@ var CommonTweenProps = {
   _positionX: new Property.PropertyItem('X', Number, {
     get: function(){return this._position.x},
     set: function(val){this._position.x = val},
+    ui: {
+      step: 1,
+      precision: 1
+    },
     keyFrameColor: '#FF8800',
     key: '_positionX',
     value: 0
@@ -59,6 +66,10 @@ var CommonTweenProps = {
   _positionY: new Property.PropertyItem('Y', Number, {
     get: function(){return this._position.y},
     set: function(val){this._position.y = val},
+    ui: {
+      step: 1,
+      precision: 1
+    },
     keyFrameColor: '#FF8800',
     key: '_positionY',
     value: 0
@@ -96,6 +107,19 @@ var CommonTweenProps = {
     set: function(val){this.fillStyle = val;},
     keyFrameColor: '#2fff00',
     key: 'fillStyle',
+    value: 1
+  }),
+  strokeStyle: new Property.PropertyItem('Color', Color, {
+    get: function(){return this.strokeStyle},
+    set: function(val){this.strokeStyle = val;},
+    keyFrameColor: '#2fff00',
+    key: 'strokeStyle',
+    value: 1
+  }),
+  opacity: new Property.PropertyItem('Opacity', Number, {
+    get: function(){return this.opacity},
+    set: function(val){this.opacity = val;},
+    key: 'opacity',
     value: 1
   })
 };

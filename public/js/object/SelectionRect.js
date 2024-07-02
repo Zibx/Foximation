@@ -50,7 +50,7 @@ class SelectionRect extends Interact {
     if(startP.y > b) b = startP.y;
 
     var collided = this.camera.getChildrenAtRect(l, t, r, b, this.selectType)
-    this.select(collided);
+    this.selection.update(collided, e);
   }
   down(e, scope){}
   move(e, scope){}

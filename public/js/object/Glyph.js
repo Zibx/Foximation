@@ -1,4 +1,4 @@
-var GlyphFillColor =     CommonTweenProps.fillStyle.extend({
+var GlyphFillStyle = CommonTweenProps.fillStyle.extend({
   set: function(val){
     this.fillStyle = val;
   },
@@ -6,69 +6,64 @@ var GlyphFillColor =     CommonTweenProps.fillStyle.extend({
     return this.fillStyle;
   }
 });
+var GlyphStrokeStyle = CommonTweenProps.strokeStyle.extend({
+  set: function(val){
+    this.strokeStyle = val;
+  },
+  get: function(){
+    return this.strokeStyle;
+  }
+});
 var GlyphTweenProps = {
-  rotation: new Property.PropertyItem('Rotation', Number, {
-    get: function(){return this.rotation},
-    set: function(val){this.rotation = val},
-    getter: Tween.FN.degToRad,
-    keyFrameColor: '#9900ff',
-    key: 'rotation',
-    value: 0,
+  rotation: CommonTweenProps.rotation,
+  skewX: CommonTweenProps.skewX,
+  skewY: CommonTweenProps.skewY,
+  _positionX: CommonTweenProps._positionX,
+  _positionY: CommonTweenProps._positionY,
+  _scaleX: CommonTweenProps._scaleX.extend( {
+    get: function() {
+      return this._scaleX
+    },
+    set: function( val ) {
+      this._scaleX = val;
+      this.width = this.charWidth * this._scaleX
+    }
   }),
-  skewX: new Property.PropertyItem('Skew X', Number, {
-    get: function(){return this.skewX},
-    set: function(val){this.skewX = val},
-    key: 'skewX',
-    value: 0,
-  }),
-  skewY: new Property.PropertyItem('Skew Y', Number, {
-    get: function(){return this.skewY},
-    set: function(val){this.skewY = val},
-    key: 'skewY',
-    value: 0
-  }),
-  _positionX: new Property.PropertyItem('Position X', Number, {
-    get: function(){return this._position.x},
-    set: function(val){this._position.x = val},
-    keyFrameColor: '#FF8800',
-    key: '_positionX',
-    value: 0
-  }),
-  _positionY: new Property.PropertyItem('Position Y', Number, {
-    get: function(){return this._position.y},
-    set: function(val){this._position.y = val},
-    keyFrameColor: '#FF8800',
-    key: '_positionY',
-    value: 0
-  }),
-  _scaleX: new Property.PropertyItem('Scale X', Number, {
-    get: function(){return this._scaleX},
-    set: function(val){this._scaleX = val; this.width = this.charWidth*this._scaleX},
-    keyFrameColor: '#FF8800',
-    key: '_scaleX',
-    value: 1
-  }),
-  _scaleY: new Property.PropertyItem('Scale Y', Number, {
+  _scaleY: CommonTweenProps._scaleY.extend( {
     get: function(){return this._scaleY},
     set: function(val){this._scaleY = val; this.height = this._charHeight*this._scaleY},
     keyFrameColor: '#FF8800',
     key: '_scaleY',
     value: 1
   }),
-  fillStyle: GlyphFillColor
+  fillStyle: GlyphFillStyle,
+  strokeStyle: GlyphStrokeStyle,
+  opacity: CommonTweenProps.opacity
 };
 class Glyph extends Item {
   constructor( cfg ) {
     super( cfg );
     this.relativeInit();
-    this.relative = true;
-    this._scaleX = 1;
-    this._scaleY = 1;
     this.marginRight = this.marginRight || 0;
 
     this._paths = {};
     this.getPath();
     this.tween.addItem(this, GlyphTweenProps);
+  }
+  propsForClone(){
+    var out = Item.prototype.propsForClone.call(this);
+    out.font = this.font;
+    out._char = this._char;
+    out._marginRight = this._marginRight;
+    out.charWidth = this.charWidth;
+    out.charHeight = this.charHeight;
+    out.descending = this.descending;
+    out.fillStyle = this.fillStyle;
+    out.strokeStyle = this.strokeStyle;
+
+    out._scaleX = this._scaleX;
+    out._scaleY = this._scaleY;
+    return out;
   }
   set marginRight(val){
     this._marginRight = val;
@@ -86,7 +81,7 @@ class Glyph extends Item {
   get char(){
     return this._char;
   }
-  toString(){ return this._char;}
+  toString(){ return 'Glyph: ' + this._char;}
   collider(p){
     return this.ctx.isPointInPath(this.getPath(), p.x, p.y);
   }
@@ -115,8 +110,14 @@ class Glyph extends Item {
       ctx.lineTo( -this.charWidth / 2 + this.charWidth, -this.charHeight / 2 + ( 1 - this.charHeight ) / 2 + this.charHeight );
       ctx.stroke();
     }
+
     ctx.fillStyle = this.fillStyle;
     ctx.fill(this.getPath());
+
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = this.strokeStyle;
+    ctx.stroke(this.getPath());
+
     if(this.highlight || this.selected){
       ctx.lineWidth = this.pxRatio.minXY()*2;
       ctx.strokeStyle = GIZMO_COLOR_WHITE;
@@ -146,13 +147,13 @@ class Glyph extends Item {
     this._scale.y = this._scaleY;
     this.width = this.charWidth*this._scaleX;
     this.height = this._charHeight*this._scaleY;*/
-/*    var properties = this.tween.getProperties(this, this.tween.getCurrentFrame())
-    console.log(p0, properties)
-    Object.assign(this, properties);
-    this._position.x = properties._positionX;
-    this._position.y = properties._positionY;
-    this.width = this.charWidth*this._scaleX;
-    this.height = this._charHeight*this._scaleY;*/
+    /*    var properties = this.tween.getProperties(this, this.tween.getCurrentFrame())
+        console.log(p0, properties)
+        Object.assign(this, properties);
+        this._position.x = properties._positionX;
+        this._position.y = properties._positionY;
+        this.width = this.charWidth*this._scaleX;
+        this.height = this._charHeight*this._scaleY;*/
     /*this._scale.x = properties._scaleX;
     this._scale.y = properties._scaleY;*/
   }
@@ -168,10 +169,13 @@ Glyph.prototype.props = {
   _type: 'glyph',
   Position: Property.position,
   Fill: [
-    GlyphFillColor
+    GlyphFillStyle
   ],
-  Stroke: Property.stroke,
+  Stroke: [
+    GlyphStrokeStyle
+  ],
   Symbol: [
+    GlyphTweenProps.opacity,
     {name: 'Char', type: String,
       get: function(){return this.char},
       set: function(val){this.char = val; this._paths = {}}

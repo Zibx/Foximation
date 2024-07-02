@@ -39,7 +39,7 @@ var NumberInput = function(cfg){
     if(step<0.1)
       return Math.round(val * 100)/100;
 
-    if(step<1)
+    if(step<=1)
       return Math.round(val * 10)/10;
 
     return val;
@@ -106,7 +106,7 @@ var NumberInput = function(cfg){
     requestAnimationFrame(updateValue);
   }
   var updateValue = function(){
-    field.value = cfg.value.get();
+    field.value = round(cfg.value.get());
   }
   cfg.value.hook(_updateValue);
 };

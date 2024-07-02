@@ -1,5 +1,6 @@
-LetterWork.prototype.modes.info = {
+Loopy.prototype.modes.info = {
   scope: {
+    lastDown: 0,
     getCurrentClickLine: function(e, clickedOn){
       var currentTextLine, currentTextLineDY;
       clickedOn
@@ -17,22 +18,13 @@ LetterWork.prototype.modes.info = {
     button: -1,
     list: [],
     items: [],
-    select: function(list, last){
-      this.camera.visit( Item, function( item ) {
-        item.selected = false;
-      } );
-      if(last && list.length)
-        list = [list[list.length-1]];
-
-      list.forEach( item => item.selected = true )
-      this.selection = list;
-      this.editableGroup.show( list )
-      this.main.selectedChars = list.filter(a=>a instanceof Item);
-      this.tween.updateSelection(this.main.selectedChars, this.main.selectedLines);
-      this.main.properties.updateSelection(this.main.selectedChars, this.main.selectedLines);
-    }
   },
   down: function(e, ctx, scope){
+    var time = +new Date();
+
+    var doubleClick = scope.lastDown > time-400
+    scope.lastDown = time;
+
     scope.downPoint = e.point.clone();
     scope.button = e.event.button;
     scope.preventUp = false;
@@ -42,7 +34,7 @@ LetterWork.prototype.modes.info = {
     scope.interactor = false;
     scope.selector = false;
     if(list.length){
-
+      
       var result = [], res;
       for(var i = list.length; i--;){
         res = list[i].down(e, scope, ctx);
@@ -53,18 +45,21 @@ LetterWork.prototype.modes.info = {
             break;
           }
           scope.interactor = list[i];
+          if(doubleClick)
+            list[i].doubleClick && list[i].doubleClick(e,scope, ctx)
           break;
         }
       }
     }else{
       scope.selector = true;
-      scope.selectionRect.show({width: 0, height: 0,start: scope.downPoint, selectType: Item, select: scope.select.bind(scope)});
+      scope.selectionRect.show({width: 0, height: 0,start: scope.downPoint, selectType: Item});
     }
   },
   move: Store.debounce(function(e, ctx, scope){
 
     if(scope.button !== -1 && !scope.interactor && scope.items.length && !scope.preventUp){
-      scope.select(scope.items, true);
+      scope.main.selection.update( scope.items, e, true );
+
       scope.interactor = scope.editableGroup;
       scope.interactor.down(e, scope, ctx)
     }
@@ -75,28 +70,21 @@ LetterWork.prototype.modes.info = {
     }else{
 
 
-      var list = scope.lw.game.camera.getChildrenAtPoint( e.point, Interact );
-      scope.lw.renderTo.style.cursor = 'auto';
+      var list = scope.game.camera.getChildrenAtPoint( e.point, Interact );
+      scope.main.renderTo.style.cursor = 'auto';
       if( list.length ) {
-        scope.lw.renderTo.style.cursor = list[ list.length - 1 ].cursor;
+        scope.main.renderTo.style.cursor = list[ list.length - 1 ].cursor;
       }
 
-      var list = scope.lw.game.camera.getChildrenAtPoint( e.point, Item );
-      scope.lw.game.camera.visit( Item, function( item ) {
-        item.highlight = false;
-      } );
-      list.forEach( item => {
-        item.highlight = item.collider( item.pointToObject( e.point ) )
-      } );
-    }
-    /*scope.lw.lines.forEach(line=>
-    line.children.forEach(char=> {
-      var point = char.pointToObject(e.point)
+      var list = scope.game.camera.getChildrenAtPoint( e.point, Item );
 
-      var is = scope.lw.game.camera.ctx.isPointInPath(char.getPath(), point.x, point.y);
-      char.highlight = is;
-    }))*/
-    scope.lw.game.gameLoop()
+
+      scope.main.selection.highlight( list.filter(item => item.pointToObject( e.point )) );
+      //this.main.game.camera.visit( Item,
+
+    }
+
+    scope.game.gameLoop()
   },10),
   up: function(e, ctx, scope){
     if(scope.preventUp){
@@ -113,19 +101,11 @@ LetterWork.prototype.modes.info = {
       scope.interactor.up( e, scope, ctx );
     }
     if((!scope.selector && !scope.interactor) || notMoved){
-      var list = scope.lw.game.camera.getChildrenAtPoint( e.point, Item )
+      var list = scope.game.camera.getChildrenAtPoint( e.point, Item )
         .filter( item => item.collider( item.pointToObject( e.point ) ) );
 
+      scope.main.selection.update( list, e, notMoved );
 
-      if( e.event.ctrlKey && e.event.shiftKey ) {
-        list = Union.subtract( scope.selection, list, 'id' );
-      } else if( e.event.ctrlKey ) {
-        list = Union.xor( list, scope.selection, 'id' );
-      }
-      scope.select(list);
-
-      /*if(list.length){
-      }*/
     }
 
     if(scope.selector){
@@ -137,8 +117,8 @@ LetterWork.prototype.modes.info = {
       scope.interactor = false;
     }
 
-    scope.lw.game.gameLoop()
-    LetterWork.prototype.modes.info.move.call(scope.lw.game, e,ctx, scope)
+    scope.game.gameLoop()
+    Loopy.prototype.modes.info.move.call(scope.game, e,ctx, scope)
   },
 
 };

@@ -1,4 +1,4 @@
-LetterWork.prototype.modes.letter = {
+Loopy.prototype.modes.letter = {
   scope: {
     getCurrentClickLine: function(e, clickedOn){
       var currentTextLine, currentTextLineDY;
