@@ -42,14 +42,29 @@ Loopy.prototype.modes.vector = {
     action: {
       peek: {
         down: function(e, context, scope){
+
+
+
           var initial = scope.initialPoint;
-          var p = scope.camera.pointToObject(scope.game.eventWrapper(e).point)
+          var wrappedPoint = scope.game.eventWrapper(e).point;
+          var p = scope.camera.pointToObject(wrappedPoint)
+
+          var whatIsIt = scope.movables.getAtPoint(scope.getRelativePoint(e));
+          if(whatIsIt){
+            if(whatIsIt.type === 'point'){
+              this.movables.close(whatIsIt);
+            }
+          }else{
+            this.movables.add(new Point(p.x-initial.x, p.y-initial.y));
+          }
+
 
 
 
 /*          if(!(e.button === 1 || e.button === 4))
             return false;*/
-          this.movables.add(new Point(p.x-initial.x, p.y-initial.y));
+
+          scope.movables.pressed = true;
           if(scope.item){
             var item = scope.item;
             var initial = scope.initialPoint;
@@ -111,10 +126,18 @@ Loopy.prototype.modes.vector = {
           var p = scope.camera.pointToObject(scope.game.eventWrapper(e).point)
           var initial = scope.initialPoint;
           scope.movables.ghost(delta.x, delta.y);
+
+
+
+
           scope.main.updateCanvas();
         },
-        up: function(){
-
+        up: function(e, context, scope){
+          scope.movables.pressed = false;
+          if(scope.movables.closing){
+            this.movables.export(scope.item);
+            this.tool = 'move';
+          }
         }
       },
       move: {
@@ -159,6 +182,7 @@ Loopy.prototype.modes.vector = {
 
     scope.button = e.event.button;
     scope.getMoveHandler(scope, e)(e.event);
+
     return;
     if(scope.tool === 'peek') {
       var p = scope.camera.pointToObject(e.point)
@@ -336,6 +360,12 @@ Loopy.prototype.modes.vector = {
         p.active = p.point.distance( localP ) < 6 * scope.pxRatio
       } );
     }else if(scope.tool === 'peek'){
+      var whatIsIt = scope.movables.getAtPoint(p);
+      if(whatIsIt){
+        scope.movables.highlight(whatIsIt);
+      }
+      console.log(whatIsIt);
+      // HIGHLIGHT IT
       if(scope.pressed){
         var initial = scope.downPoint;
         var distance = initial.distance(e.point);
@@ -344,6 +374,8 @@ Loopy.prototype.modes.vector = {
           scope.ghost = e.point.subClone(initial);
         }
       }else{
+
+
 
       }
     }

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <style>
+    * {margin:0;padding:0}
+  </style>
+</head>
+<body>
+  <script src="/js/primitives_v2.js"></script>
+  <script src="/js/bezier.js"></script>
+  <canvas id="c" width="1280" height="800"></canvas>
+  <script>
+    var A = new Point(500,25);
+    var B = new Point(100,90);
+    var C = new Point(410,300);
+    var D = new Point(132,492);
+    var E = new Point(0,0);
+
+    var bezier = new Bezier(A,B,C,D);
+    var ctx = c.getContext('2d');
+    var circle = function(p){
+      var current = p.distance(mouse)<7;
+      ctx.strokeStyle = current ? '#b00fc0' : '#751010';
+      ctx.lineWidth = current ? 3 : 1;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,4,0, 6.28);
+        ctx.closePath()
+      ctx.stroke();
+    }
+    var line = function(A, B){
+      ctx.beginPath();
+      ctx.moveTo(A.x,A.y);
+      ctx.lineTo(B.x,B.y)
+      ctx.stroke();
+    }
+    var n = 0;
+    var draw = function(){
+      //ctx.fillStyle = '#FFFFFF06'
+      //ctx.fillRect(0,0,1280,800)
+      ctx.clearRect(0,0,1280,800);
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#111133';
+      bezier.draw(ctx);
+
+      var closest = bezier.closest(mouse);
+
+
+      ctx.lineWidth = 2;
+      if(closest.d< 64){
+        var t = closest.t;
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 1;
+        line(
+          A.lerpClone(B, t),
+          B.lerpClone(C, t)
+        );
+        line(
+          B.lerpClone(C, t),
+          C.lerpClone(D, t)
+        );
+        line(
+          A.lerpClone(B, t).lerpClone(B.lerpClone(C, t), t),
+          B.lerpClone(C, t).lerpClone(C.lerpClone(D, t), t)
+        )
+        line(B, C)
+      }
+      if(closest.d < 7){
+
+
+        ctx.lineWidth = 4;
+        circle(closest);
+        if(!active) {
+          E.borrow( closest )
+          E.t = closest.t;
+        }
+      }
+      if(closest.d < 64) {
+        var splitted = bezier.split( closest.t );
+        ctx.strokeStyle = '#25e81f';
+        splitted[ 0 ].draw( ctx );
+        ctx.strokeStyle = '#e81f6c';
+        splitted[ 1 ].draw( ctx );
+      }
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#114932';
+      line(A,B);
+      line(C,D);
+      ctx.lineWidth = 0.5;
+
+      /*line(B,C);
+
+      line(B,D);
+      line(A,C);*/
+
+      ctx.lineWidth = 1;
+
+
+      [A,B,C,D].forEach(circle)
+      circle(bezier.calculate(n));
+
+
+
+      ctx.fillText('Length: '+bezier.length().toFixed(2), 10, 20)
+
+      if(closest.d < 64) {
+        ctx.strokeStyle = '#e81f6c';
+        line( mouse, closest );
+      }
+
+      var lineWidth = 20;
+      for(var i = 0; i <= 1; i+=0.2 ){
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#e81f6c';
+        line( bezier.calculate(i), bezier.calculate(i).addClone(bezier.normal(i).mul(lineWidth)) );
+
+      }
+      line( bezier.calculate(1), bezier.calculate(1).addClone(bezier.normal(1).mul(lineWidth)) );
+
+
+      if(closest.d < 64) {
+        var splitted2 = bezier.split( closest.t );
+
+        var delta = bezier.normal( 0 ).mul( lineWidth );
+        splitted2[0].A = bezier.calculate( 0 ).addClone( delta );
+        splitted2[0].B.add(delta);
+
+        var delta = bezier.normal( closest.t-0.001 ).mul( lineWidth );
+        splitted2[0].C.add(delta);
+        splitted2[0].D = bezier.calculate( closest.t-0.001 ).addClone( delta );
+
+        var delta = bezier.normal( closest.t+0.001 ).mul( lineWidth );
+        splitted2[1].A = bezier.calculate( closest.t+0.001 ).addClone( delta );
+        splitted2[1].B.add(delta);
+
+        var delta = bezier.normal( 1 ).mul( lineWidth );
+        splitted2[1].C.add(delta);
+        splitted2[1].D = bezier.calculate( 1 ).addClone( delta );
+
+
+/*        for( var i = 0.2; i < 0.9; i += 0.1 ) {
+
+          var tLocal = i * closest.t;
+          splitted2[0].moveToPoint(
+            i,
+            bezier.calculate( tLocal ).addClone( bezier.normal( tLocal ).mul( lineWidth ) )
+          );
+
+          var tLocal = closest.t+i * (1-closest.t);
+          splitted2[1].moveToPoint(
+            i,
+            bezier.calculate( tLocal ).addClone( bezier.normal( tLocal ).mul( lineWidth ) )
+          )
+        }*/
+
+        splitted2[0].draw(ctx, true);
+
+        ctx.strokeStyle = '#FF00FF'
+        splitted2[1].draw(ctx, true);
+
+        lineWidth = -20;
+
+        var splitted2 = bezier.split( closest.t );
+
+        var delta = bezier.normal( 0 ).mul( lineWidth );
+        splitted2[0].A = bezier.calculate( 0 ).addClone( delta );
+        splitted2[0].B.add(delta);
+
+        var delta = bezier.normal( closest.t-0.001 ).mul( lineWidth );
+        splitted2[0].C.add(delta);
+        splitted2[0].D = bezier.calculate( closest.t-0.001 ).addClone( delta );
+
+        var delta = bezier.normal( closest.t+0.001 ).mul( lineWidth );
+        splitted2[1].A = bezier.calculate( closest.t+0.001 ).addClone( delta );
+        splitted2[1].B.add(delta);
+
+        var delta = bezier.normal( 1 ).mul( lineWidth );
+        splitted2[1].C.add(delta);
+        splitted2[1].D = bezier.calculate( 1 ).addClone( delta );
+
+
+        for( var i = 0.2; i < 0.9; i += 0.2 ) {
+
+          var tLocal = i * closest.t;
+          splitted2[0].moveToPoint(
+            i,
+            bezier.calculate( tLocal ).addClone( bezier.normal( tLocal ).mul( lineWidth ) )
+          );
+
+          var tLocal = closest.t+i * (1-closest.t);
+          splitted2[1].moveToPoint(
+            i,
+            bezier.calculate( tLocal ).addClone( bezier.normal( tLocal ).mul( lineWidth ) )
+          )
+        }
+
+        splitted2[0].draw(ctx, true);
+
+        ctx.strokeStyle = '#FF00FF'
+        splitted2[1].draw(ctx, true);
+
+
+
+      }else {
+        var l2 = new Bezier(
+          bezier.calculate( 0 ).addClone( bezier.normal( 0 ).mul( lineWidth ) ),
+          B.clone(),
+          C.clone(),
+          bezier.calculate( 1 ).addClone( bezier.normal( 1 ).mul( lineWidth ) ),
+        );
+
+        var n;
+        for( var i = 0.2; i < 1; i += 0.2 ) {
+          l2.moveToPoint( i, bezier.calculate( i ).addClone( bezier.normal( i ).mul( lineWidth ) ) )
+
+        }
+
+        l2.draw( ctx );
+
+        var specialPoints = bezier.getExtremePoints();
+        specialPoints.forEach(circle)
+      }
+
+
+    };
+    var mouse = new Point();
+    draw();
+    c.addEventListener('mouseup', function(e){
+      active = false;
+    });
+    c.addEventListener('mousemove', function(e){
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      if(active) {
+        active.borrow( mouse );
+        if(active === E){
+          bezier.moveToPoint(E.t, mouse)
+        }
+      }
+      draw();
+    });
+    var active;
+    c.addEventListener('mousedown', function(){
+      active = [A,B,C,D].map(p=>{
+        return {p, distance: p.distance(mouse)}
+      }).sort((a,b)=>a.distance-b.distance)
+        .filter(p=>p.distance<7)[0];
+      if(!active)
+        if(E.distance(mouse)<7)
+          active = {p: E}
+
+      active && (active = active.p)
+
+    });
+  </script>
+</body>
+</html>

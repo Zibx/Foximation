@@ -57,9 +57,6 @@ Point.prototype = {
       this.y < y && (this.y = y);
       return this;
     },
-    lerp: function(point, num) {
-        return point.subClone(this).mul(num).add(this);
-    },
     middle: function(point) {
         return new Point((this.x+point.x)/2, (this.y+point.y)/2)
     },
@@ -144,6 +141,17 @@ Point.prototype = {
       }
     }
 };
+(function(){
+  var out = new Point();
+  Point.prototype.lerp = function(to, amount) {
+    out.x = this.x + (to.x -this.x) * amount;
+    out.y = this.y + (to.y - this.y) * amount;
+    return out;
+  };
+  Point.prototype.lerpClone = function(to, amount) {
+    return this.lerp(to, amount).clone();
+  };
+})();
 Point.prototype.getter = Point.prototype.clone;
 [
     {

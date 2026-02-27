@@ -15,9 +15,31 @@
     this._ghost = false;
     this.id = 1;
     this.lastPoint = false;
+    this._ghostSegmentEnd = new Point();
+    this.pressed = false;
   };
   Movables.prototype = {
+    close: function(collision){
+        if(collision.type==='point'){
+          var edge = {
+            id: this.id++,
+            pStart: this.lastEdge ? this.lastEdge.pEnd : this._ghost.point,
+            p1: this.lastEdge ? this.lastEdge.p2.mulClone(-1) : this._ghost.delta,
+            pEnd: collision.point
+          };
+          this.lastEdge = edge;
+          this.edges.push(edge);
+          this._ghost = edge;
+          edge.p2 = new Point();
+          this.closing = true;
+          console.log('close path');
+        }
+    },
+    export: function(item){
+
+    },
     add: function(point){
+      this.closing = false;
       point.id = this.id++;
       console.log('add point');
       if(this.lastPoint){
@@ -63,6 +85,12 @@
     },
     ghostNextPoint: function(p){
       console.log(this._ghost.type)
+
+      if(this.lastPoint){
+        this._ghostSegmentEnd.borrow(p);
+        this.scope.main.updateCanvas();
+      }
+
       if(this._ghost.type === 'point'){
 
       }else{
@@ -152,25 +180,42 @@
         //m.globalPoint = this.item.objectPointToWorld(m.point);
       });
     },
+    highlight: function(collision){
+
+    },
     getAtPoint: function(point){
+      console.log(point)
       var pxRatio = this.scope.pxRatio;
       var nearest = false, near = Infinity;
-      var movables = this.movables, distance;
+      var points = this.points, distance, nearestID;
       var p;
-      for( var i = 0, _i = movables.length; i < _i; ++i ) {
-        p = movables[ i ].point;
+      for( var i = 0, _i = points.length; i < _i; ++i ) {
+        p = points[ i ];
         distance = p.distance( point );
         if( distance < 6 * pxRatio ) {
           if( !nearest ) {
-            nearest = movables[ i ];
+            nearest = points[ i ];
             near = distance;
+            nearestID = i;
           } else if( near > distance ) {
-            nearest = movables[ i ];
+            nearest = points[ i ];
             near = distance;
+            nearestID = i;
           }
         }
       }
-      return nearest;
+      if(nearest){
+        return {
+          type: 'point',
+          point: nearest,
+          near: near,
+          id: nearestID
+        };
+      }
+
+      // CHECK CURVE COLLISION
+
+      return false;
     },
     query: function(p){
       var points = this.movables
@@ -192,35 +237,10 @@
 
 
 
-        this.movables.forEach((movable, i)=> {
-          if(!movable.isMain){
-            ctx.beginPath();
-            ctx.moveTo(movable.point.x, movable.point.y);
-            ctx.lineTo(movable.main.x, movable.main.y);
-            ctx.stroke();
-          }
-          if(i === scope.activeMovable && scope.ghost){
-            ctx.beginPath();
-            ctx.moveTo(movable.point.x, movable.point.y);
-            ctx.lineTo(scope.ghost.x, movable.point.y+scope.ghost.y);
-            ctx.stroke();
-          }
-        });
-
         ctx.fillStyle = MOVABLE_STROKE;
         ctx.strokeStyle = MOVABLE_FILL;
 
-        this.movables.forEach((movable, i)=>{
-          ctx.strokeStyle = movable.active ? MOVABLE_ACTIVE_STROKE:MOVABLE_STROKE;
-          ctx.fillStyle = movable.active ? MOVABLE_ACTIVE_FILL:MOVABLE_FILL;
-          ctx.beginPath();
-          ctx.arc(movable.point.x, movable.point.y, movable.radius*pxRatio, 0, 3.14159265468979*2);
-          ctx.fill();
-          ctx.stroke();
-          if(i === scope.activeMovable){
 
-          }
-        });
 
         this.edges.forEach(edge => {
           ctx.beginPath();
@@ -241,8 +261,18 @@
           ctx.stroke();
 
         });
+
         if(this._ghost){
+
           if(this._ghost.type === 'point'){
+            if(!this.pressed){
+              ctx.beginPath();
+              ctx.moveTo(this._ghost.point.x, this._ghost.point.y);
+              ctx.bezierCurveTo(this._ghost.point.x+this._ghost.delta.x, this._ghost.point.y+this._ghost.delta.y,
+                this._ghostSegmentEnd.x, this._ghostSegmentEnd.y,
+                this._ghostSegmentEnd.x, this._ghostSegmentEnd.y);
+              ctx.stroke();
+            }
 
             ctx.beginPath();
             ctx.moveTo(this._ghost.point.x, this._ghost.point.y);
@@ -255,6 +285,20 @@
             ctx.arc(this._ghost.point.x+this._ghost.delta.x, this._ghost.point.y+this._ghost.delta.y, 5*pxRatio, 0, 3.14159265468979*2);
             ctx.fill();
             ctx.stroke();
+          }else{
+            if(!this.pressed){
+              ctx.beginPath();
+              ctx.moveTo(this._ghost.pEnd.x, this._ghost.pEnd.y);
+              ctx.bezierCurveTo(this._ghost.pEnd.x-this._ghost.p2.x, this._ghost.pEnd.y-this._ghost.p2.y,
+                this._ghostSegmentEnd.x, this._ghostSegmentEnd.y,
+                this._ghostSegmentEnd.x, this._ghostSegmentEnd.y);
+              ctx.stroke();
+            }else{
+              ctx.beginPath();
+              ctx.moveTo(this._ghost.pEnd.x, this._ghost.pEnd.y);
+              ctx.lineTo(this._ghost.pEnd.x-this._ghost.p2.x, this._ghost.pEnd.y-this._ghost.p2.y);
+              ctx.stroke();
+            }
           }
         }
 
@@ -273,6 +317,7 @@
           ctx.arc(x, y, 3*pxRatio, 0, 3.14159265468979*2);
           ctx.fill();
           ctx.stroke();
+
         });
 
         this.points.forEach(point =>{
